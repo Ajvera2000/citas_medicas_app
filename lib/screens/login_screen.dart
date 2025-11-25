@@ -1,5 +1,7 @@
+// login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../routes.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -11,56 +13,70 @@ class _LoginScreenState extends State<LoginScreen> {
   final _pass = TextEditingController();
   bool loading = false;
 
-  final auth = FirebaseAuth.instance;
-
-  Future<void> _login() async {
+  Future<void> login() async {
     try {
       setState(() => loading = true);
-      await auth.signInWithEmailAndPassword(email: _email.text.trim(), password: _pass.text.trim());
+
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _email.text.trim(),
+        password: _pass.text.trim(),
+      );
+
+      // ❌ NO navegar manualmente, AuthGate lo detecta
+
+    } on FirebaseAuthException catch (e) {
+      String mensaje = "";
+      if (e.code == 'user-not-found') {
+        mensaje = "Usuario no encontrado";
+      } else if (e.code == 'wrong-password') {
+        mensaje = "Contraseña incorrecta";
+      } else {
+        mensaje = e.message ?? "Error desconocido";
+      }
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Error: $mensaje")));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Error: $e")));
     } finally {
       setState(() => loading = false);
     }
-  }
-
-  Future<void> _register() async {
-    try {
-      setState(() => loading = true);
-      await auth.createUserWithEmailAndPassword(email: _email.text.trim(), password: _pass.text.trim());
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Cuenta creada')));
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-    } finally {
-      setState(() => loading = false);
-    }
-  }
-
-  @override
-  void dispose() {
-    _email.dispose();
-    _pass.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Iniciar sesión')),
+      appBar: AppBar(title: Text("Iniciar sesión")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            TextField(controller: _email, decoration: InputDecoration(labelText: 'Email')),
-            TextField(controller: _pass, decoration: InputDecoration(labelText: 'Contraseña'), obscureText: true),
-            const SizedBox(height: 20),
-            if (loading) CircularProgressIndicator(),
-            if (!loading) Column(
-              children: [
-                ElevatedButton(onPressed: _login, child: const Text('Entrar')),
-                TextButton(onPressed: _register, child: const Text('Crear cuenta')),
-              ],
-            )
+            TextField(
+              controller: _email,
+              decoration: InputDecoration(labelText: "Email"),
+            ),
+            TextField(
+              controller: _pass,
+              decoration: InputDecoration(labelText: "Contraseña"),
+              obscureText: true,
+            ),
+            SizedBox(height: 20),
+            loading
+                ? CircularProgressIndicator()
+                : Column(
+                    children: [
+                      ElevatedButton(
+                        onPressed: login,
+                        child: Text("Entrar"),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, AppRoutes.register);
+                        },
+                        child: Text("Crear cuenta"),
+                      )
+                    ],
+                  )
           ],
         ),
       ),
