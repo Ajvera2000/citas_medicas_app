@@ -81,7 +81,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             padding: EdgeInsets.all(24),
             child: Column(
               children: [
-                Image.asset("assets/logo.png", height: 120),
+                // Logo actualizado con la ruta correcta
+                Image.asset("assets/images/logo.png", height: 120),
                 SizedBox(height: 30),
                 GestureDetector(
                   onTap: pickImage,
