@@ -1,7 +1,7 @@
-// login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../routes.dart';
+import '../theme.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -22,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _pass.text.trim(),
       );
 
-      // ❌ NO navegar manualmente, AuthGate lo detecta
+      // AuthGate detecta automáticamente
 
     } on FirebaseAuthException catch (e) {
       String mensaje = "";
@@ -46,38 +46,74 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Iniciar sesión")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _email,
-              decoration: InputDecoration(labelText: "Email"),
-            ),
-            TextField(
-              controller: _pass,
-              decoration: InputDecoration(labelText: "Contraseña"),
-              obscureText: true,
-            ),
-            SizedBox(height: 20),
-            loading
-                ? CircularProgressIndicator()
-                : Column(
-                    children: [
-                      ElevatedButton(
-                        onPressed: login,
-                        child: Text("Entrar"),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.primary, AppColors.secondary],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset("assets/logo.png", height: 120), // Logo app
+                SizedBox(height: 40),
+                TextField(
+                  controller: _email,
+                  decoration: InputDecoration(
+                    labelText: "Email",
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                SizedBox(height: 16),
+                TextField(
+                  controller: _pass,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: "Contraseña",
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                SizedBox(height: 24),
+                loading
+                    ? CircularProgressIndicator()
+                    : Column(
+                        children: [
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: AppColors.primary,
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 14, horizontal: 32),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: login,
+                            child: Text("Iniciar sesión"),
+                          ),
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.pushNamed(context, AppRoutes.register),
+                            child: Text(
+                              "Crear cuenta",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          )
+                        ],
                       ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, AppRoutes.register);
-                        },
-                        child: Text("Crear cuenta"),
-                      )
-                    ],
-                  )
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );

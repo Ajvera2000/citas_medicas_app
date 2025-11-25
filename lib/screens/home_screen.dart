@@ -1,4 +1,3 @@
-// home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,6 +6,7 @@ import '../services/firestore_service.dart';
 import '../models/appointment.dart';
 import '../widgets/appointment_card.dart';
 import '../routes.dart';
+import '../theme.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -23,66 +23,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Citas médicas')),
-
-      // ░░ MENU LATERAL ░░
-      drawer: Drawer(
-        child: ListView(
-          children: [
-            StreamBuilder<DocumentSnapshot>(
-              stream: FirebaseFirestore.instance.collection("users").doc(uid).snapshots(),
-              builder: (_, snap) {
-                if (!snap.hasData) {
-                  return UserAccountsDrawerHeader(
-                    accountName: Text("Cargando..."),
-                    accountEmail: Text(""),
-                  );
-                }
-
-                final data = snap.data!;
-                final userData = data.data() as Map<String, dynamic>?;
-
-                // Crear documento básico si no existe
-                if (userData == null) {
-                  FirebaseFirestore.instance.collection("users").doc(uid).set({
-                    "name": "Usuario",
-                    "email": FirebaseAuth.instance.currentUser!.email ?? "",
-                    "photoUrl": null,
-                    "createdAt": Timestamp.now(),
-                  });
-                }
-
-                return UserAccountsDrawerHeader(
-                  accountName: Text(userData?["name"] ?? "Usuario"),
-                  accountEmail: Text(userData?["email"] ?? FirebaseAuth.instance.currentUser!.email ?? ""),
-                  currentAccountPicture: CircleAvatar(
-                    backgroundImage: userData?["photoUrl"] != null
-                        ? NetworkImage(userData!["photoUrl"])
-                        : null,
-                    child: userData?["photoUrl"] == null
-                        ? Icon(Icons.person, size: 50)
-                        : null,
-                  ),
-                );
-              },
-            ),
-
-            ListTile(
-              leading: Icon(Icons.person),
-              title: Text("Mi Perfil"),
-              onTap: () => Navigator.pushNamed(context, AppRoutes.profile),
-            ),
-            ListTile(
-              leading: Icon(Icons.logout),
-              title: Text("Cerrar sesión"),
-              onTap: () {
-                FirebaseAuth.instance.signOut();
-              },
-            ),
-          ],
-        ),
+      appBar: AppBar(
+        title: Text('Citas Médicas'),
+        backgroundColor: AppColors.primary,
       ),
-
+      drawer: _buildDrawer(),
       body: Column(
         children: [
           _buildFilters(),
@@ -107,7 +52,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     final a = lista[i];
                     return AppointmentCard(
                       appointment: a,
-                      onTap: () => Navigator.pushNamed(context, AppRoutes.detail, arguments: a),
+                      onTap: () => Navigator.pushNamed(
+                        context,
+                        AppRoutes.detail,
+                        arguments: a,
+                      ),
                       onDelete: () async {
                         await fs.deleteAppointment(a.id!);
                       },
@@ -119,10 +68,59 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-
       floatingActionButton: FloatingActionButton(
+        backgroundColor: AppColors.secondary,
         child: Icon(Icons.add),
         onPressed: () => Navigator.pushNamed(context, AppRoutes.form),
+      ),
+    );
+  }
+
+  Widget _buildDrawer() {
+    return Drawer(
+      child: ListView(
+        children: [
+          StreamBuilder<DocumentSnapshot>(
+            stream:
+                FirebaseFirestore.instance.collection("users").doc(uid).snapshots(),
+            builder: (_, snap) {
+              if (!snap.hasData) {
+                return UserAccountsDrawerHeader(
+                  accountName: Text("Cargando..."),
+                  accountEmail: Text(""),
+                  decoration: BoxDecoration(color: AppColors.primary),
+                );
+              }
+
+              final data = snap.data!.data() as Map<String, dynamic>?;
+
+              return UserAccountsDrawerHeader(
+                accountName: Text(data?["name"] ?? "Usuario"),
+                accountEmail: Text(
+                    data?["email"] ?? FirebaseAuth.instance.currentUser!.email ?? ""),
+                currentAccountPicture: CircleAvatar(
+                  backgroundImage: data?["photoUrl"] != null
+                      ? NetworkImage(data!["photoUrl"])
+                      : null,
+                  child: data?["photoUrl"] == null
+                      ? Icon(Icons.person, size: 50)
+                      : null,
+                ),
+                decoration: BoxDecoration(color: AppColors.primary),
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.person, color: AppColors.primary),
+            title: Text("Mi Perfil"),
+            onTap: () => Navigator.pushNamed(context, AppRoutes.profile),
+          ),
+          ListTile(
+            leading: Icon(Icons.logout, color: AppColors.primary),
+            title: Text("Cerrar sesión"),
+            onTap: () => FirebaseAuth.instance.signOut(),
+          ),
+        ],
       ),
     );
   }
@@ -134,7 +132,10 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Expanded(
             child: TextField(
-              decoration: InputDecoration(labelText: 'Filtrar por doctor'),
+              decoration: InputDecoration(
+                labelText: 'Filtrar por doctor',
+                prefixIcon: Icon(Icons.search, color: AppColors.secondary),
+              ),
               onChanged: (v) => setState(() => doctorFilter = v.trim()),
             ),
           ),
@@ -143,7 +144,10 @@ class _HomeScreenState extends State<HomeScreen> {
             value: statusFilter.isEmpty ? null : statusFilter,
             hint: Text("Estado"),
             items: ['pendiente', 'confirmada', 'cancelada']
-                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                .map((e) => DropdownMenuItem(
+                      value: e,
+                      child: Text(e),
+                    ))
                 .toList(),
             onChanged: (v) => setState(() => statusFilter = v ?? ''),
           )
